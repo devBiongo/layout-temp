@@ -13,7 +13,6 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CelebrationIcon from "@mui/icons-material/Celebration";
 
-// 类型定义
 type MenuItem = {
   key: React.Key;
   label: string;
@@ -22,7 +21,6 @@ type MenuItem = {
   children?: MenuItem[];
 };
 
-// 菜单数据
 const menuData: MenuItem[] = [
   {
     key: 1,
@@ -53,7 +51,6 @@ const menuData: MenuItem[] = [
   },
 ];
 
-// 工具函数：查找路径
 function findTreeKeys(tree: MenuItem[], key: React.Key): React.Key[] {
   for (const node of tree) {
     if (node.key === key) return [node.key];
@@ -168,7 +165,6 @@ const RenderMenu: React.FC<RenderMenuProps> = ({
   );
 };
 
-// 主组件
 export default function NestedList() {
   const [selectedKeys, setSelectedKeys] = React.useState<React.Key[]>([]);
   const [openedKeys, setOpenedKeys] = React.useState<Record<string, boolean>>(

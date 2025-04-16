@@ -1,7 +1,5 @@
-import Details from "./components/Details";
+import { Upgrade } from "./components/Upgrade";
 
-function App() {
-  return <Details />;
+export function App() {
+  return <Upgrade />;
 }
-
-export default App;

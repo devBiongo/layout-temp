@@ -25,7 +25,6 @@ function Header() {
           </CustomTab>
         </CustomTabs>
       </Box>
-      <Box></Box>
     </Box>
   );
 }
