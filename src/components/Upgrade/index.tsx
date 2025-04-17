@@ -1,40 +1,47 @@
 import { Box, Stack } from "@mui/material";
+import { Menu, MenuProps } from "./components/Menu";
 
-import MenuList from "./components/MenuList";
+type MenuItem = Required<MenuProps>["items"][number];
 
-const rootMenu = {
-  id: "0",
-  name: "root",
-  children: [
-    {
-      id: "1",
-      name: "コンテンツ管理",
-    },
-    {
-      id: "2",
-      name: "編集管理",
-      disabled: false,
-    },
-    {
-      id: "3",
-      name: "設定管理",
-      children: [
-        { id: "4", name: "Drafts", disabled: true },
-        {
-          id: "5",
-          name: "Starred",
-          children: [
-            { id: "6", name: "Sub Star 1" },
-            {
-              id: "7",
-              name: "Sub Star 2",
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
+const items: MenuItem[] = [
+  {
+    label: "Navigation One",
+    key: "mail",
+  },
+  {
+    label: "Navigation Two",
+    key: "app",
+
+    disabled: true,
+  },
+  {
+    label: "Navigation Three - Submenu",
+    key: "SubMenu",
+
+    children: [
+      {
+        key: "aaaa",
+        label: "Item 1",
+        children: [
+          { label: "Option 1", key: "setting:1" },
+          { label: "Option 2", key: "setting:2" },
+        ],
+      },
+      {
+        key: "bbbbb",
+        label: "Item 2",
+        children: [
+          { label: "Option 3", key: "setting:3" },
+          { label: "Option 4", key: "setting:4" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "bb213bbb",
+    label: "setting:3",
+  },
+];
 
 export function Upgrade() {
   return (
@@ -51,7 +58,7 @@ export function Upgrade() {
           bgcolor: "background.paper",
         })}
       >
-        <MenuList rootMenu={rootMenu} />
+        <Menu items={items} />
       </Box>
       <Box
         sx={{
@@ -63,7 +70,7 @@ export function Upgrade() {
       >
         <Box height="2000px">
           <Box component={"header"} boxShadow={1}>
-            <MenuList rootMenu={rootMenu} isTopMenu={true} />
+            <Menu mode="horizontal" items={items} />
           </Box>
         </Box>
       </Box>
