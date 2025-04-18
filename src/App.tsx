@@ -1,5 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import { Menu, MenuProps } from "./components/Menu";
+import { CommonTable } from "./components/CommonTable";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
@@ -11,7 +12,6 @@ const items: MenuItem[] = [
   {
     label: "Navigation Two",
     key: "app",
-
     disabled: true,
   },
   {
@@ -43,6 +43,12 @@ const items: MenuItem[] = [
   },
 ];
 
+const data = [
+  { id: 1, name: "Cupcake", calories: 305 },
+  { id: 2, name: "Donut", calories: 452 },
+  { id: 3, name: "Eclair", calories: 262 },
+];
+
 export function App() {
   return (
     <Stack direction="row">
@@ -71,6 +77,21 @@ export function App() {
         <Box height="2000px">
           <Box component={"header"} boxShadow={1}>
             <Menu mode="horizontal" items={items} />
+          </Box>
+          <Box component={"main"} mt={2}>
+            <CommonTable
+              rows={data}
+              rowKey={"id"}
+              defaultOrderBy="calories"
+              checkboxSelection
+              onSelectionChange={(selectedRows) => {
+                console.log("当前选中：", selectedRows);
+              }}
+              columns={[
+                { id: "name", label: "Name" },
+                { id: "calories", label: "Calories", numeric: true },
+              ]}
+            />
           </Box>
         </Box>
       </Box>
