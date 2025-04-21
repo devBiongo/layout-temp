@@ -1,6 +1,6 @@
 import { Box, Button, Stack } from "@mui/material";
 import { Menu, MenuProps } from "./components/Menu";
-import { CommonTable } from "./components/CommonTable";
+import { CommonTable } from "@/components/CommonTable";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
