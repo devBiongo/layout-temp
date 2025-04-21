@@ -1,4 +1,4 @@
-import { Box, Stack } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import { Menu, MenuProps } from "./components/Menu";
 import { CommonTable } from "./components/CommonTable";
 
@@ -81,15 +81,22 @@ export function App() {
           <Box component={"main"} mt={2}>
             <CommonTable
               rows={data}
-              rowKey={"id"}
-              defaultOrderBy="calories"
+              rowKey="id"
               checkboxSelection
-              onSelectionChange={(selectedRows) => {
-                console.log("当前选中：", selectedRows);
-              }}
               columns={[
-                { id: "name", label: "Name" },
-                { id: "calories", label: "Calories", numeric: true },
+                { key: "name", label: "名称" },
+                { key: "calories", label: "卡路里", numeric: true },
+                {
+                  numeric: true,
+                  label() {
+                    return <Box pr={3}>操作</Box>;
+                  },
+                  render(row) {
+                    return (
+                      <Button onClick={() => alert(row.name)}>编辑</Button>
+                    );
+                  },
+                },
               ]}
             />
           </Box>

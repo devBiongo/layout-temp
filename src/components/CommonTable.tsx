@@ -17,8 +17,8 @@ import { ChangeEvent, MouseEvent, ReactNode, useMemo, useState } from "react";
 type Order = "asc" | "desc";
 
 export interface Column<T> {
-  id: keyof T;
-  label: string;
+  key?: keyof T;
+  label: string | (() => ReactNode);
   numeric?: boolean;
   disablePadding?: boolean;
   render?: (row: T) => ReactNode;
@@ -63,20 +63,26 @@ export function CommonTable<T>({
   checkboxSelection = false,
   onSelectionChange,
 }: CommonTableProps<T>) {
+  const firstSortableColumn = columns.find(
+    (col): col is Column<T> & { id: keyof T } => !!col.key
+  );
   const [order, setOrder] = useState<Order>(defaultOrder);
   const [orderBy, setOrderBy] = useState<keyof T>(
-    defaultOrderBy ?? columns[0].id
+    defaultOrderBy ?? (firstSortableColumn?.id as keyof T)
   );
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  const sortedRows = useMemo(() => {
+    if (!orderBy) return rows;
+    return [...rows].sort(getComparator(order, orderBy));
+  }, [order, orderBy, rows]);
+
   const visibleRows = useMemo(
     () =>
-      [...rows]
-        .sort(getComparator(order, orderBy))
-        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [order, orderBy, page, rowsPerPage, rows]
+      sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [sortedRows, page, rowsPerPage]
   );
 
   const handleRequestSort = (_: MouseEvent<unknown>, property: keyof T) => {
@@ -140,33 +146,50 @@ export function CommonTable<T>({
                         )
                       }
                       onChange={handleSelectAllClick}
-                      inputProps={{ "aria-label": "select all rows" }}
+                      slotProps={{
+                        input: {
+                          "aria-label": "select all rows",
+                        },
+                      }}
                     />
                   </TableCell>
                 )}
-                {columns.map((col) => (
-                  <TableCell
-                    key={String(col.id)}
-                    align={col.numeric ? "right" : "left"}
-                    padding={col.disablePadding ? "none" : "normal"}
-                    sortDirection={orderBy === col.id ? order : false}
-                  >
-                    <TableSortLabel
-                      active={orderBy === col.id}
-                      direction={orderBy === col.id ? order : "asc"}
-                      onClick={(e) => handleRequestSort(e, col.id)}
+                {columns.map((col, index) => {
+                  const sortable = col.key !== undefined;
+                  return (
+                    <TableCell
+                      key={String(col.key ?? index)}
+                      align={col.numeric ? "right" : "left"}
+                      padding={col.disablePadding ? "none" : "normal"}
+                      sortDirection={
+                        sortable && orderBy === col.key ? order : false
+                      }
                     >
-                      {col.label}
-                      {orderBy === col.id ? (
-                        <Box component="span" sx={visuallyHidden}>
-                          {order === "desc"
-                            ? "sorted descending"
-                            : "sorted ascending"}
-                        </Box>
-                      ) : null}
-                    </TableSortLabel>
-                  </TableCell>
-                ))}
+                      {sortable ? (
+                        <TableSortLabel
+                          active={orderBy === col.key}
+                          direction={orderBy === col.key ? order : "asc"}
+                          onClick={(e) => handleRequestSort(e, col.key!)}
+                        >
+                          {typeof col.label === "function"
+                            ? col.label()
+                            : col.label}
+                          {orderBy === col.key ? (
+                            <Box component="span" sx={visuallyHidden}>
+                              {order === "desc"
+                                ? "sorted descending"
+                                : "sorted ascending"}
+                            </Box>
+                          ) : null}
+                        </TableSortLabel>
+                      ) : typeof col.label === "function" ? (
+                        col.label()
+                      ) : (
+                        col.label
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -195,13 +218,17 @@ export function CommonTable<T>({
                         <Checkbox color="primary" checked={isItemSelected} />
                       </TableCell>
                     )}
-                    {columns.map((col) => (
+                    {columns.map((col, colIndex) => (
                       <TableCell
-                        key={`${rowIndex}-${String(col.id)}`}
+                        key={`${rowIndex}-${colIndex}`}
                         align={col.numeric ? "right" : "left"}
                         padding={col.disablePadding ? "none" : "normal"}
                       >
-                        {col.render ? col.render(row) : String(row[col.id])}
+                        {col.render
+                          ? col.render(row)
+                          : col.key
+                          ? String(row[col.key])
+                          : null}
                       </TableCell>
                     ))}
                   </TableRow>
