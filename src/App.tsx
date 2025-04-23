@@ -1,107 +1,43 @@
-import { Box, Button, Stack } from "@mui/material";
-import { Menu, MenuProps } from "./components/Menu";
-import { CommonTable } from "@/components/CommonTable";
+import React from "react";
+import FileExplorer from "./components/FileExplorer";
 
-type MenuItem = Required<MenuProps>["items"][number];
-
-const items: MenuItem[] = [
+const items: React.ComponentProps<typeof FileExplorer>["items"] = [
   {
-    label: "Navigation One",
-    key: "mail",
-  },
-  {
-    label: "Navigation Two",
-    key: "app",
-    disabled: true,
-  },
-  {
-    label: "Navigation Three - Submenu",
-    key: "SubMenu",
-
+    id: "1",
+    label: "Documents",
+    fileType: "folder",
     children: [
       {
-        key: "aaaa",
-        label: "Item 1",
+        id: "1.x",
+        label: "Company",
+        fileType: "folder",
         children: [
-          { label: "Option 1", key: "setting:1" },
-          { label: "Option 2", key: "setting:2" },
+          { id: "1.9.1", label: "Invoice", fileType: "folder" },
+          { id: "1.1.2", label: "Meeting notes", fileType: "folder" },
+          { id: "1.1.3", label: "Tasks list", fileType: "folder" },
+          { id: "1.1.4", label: "Equipment", fileType: "folder" },
+          { id: "1.1.5", label: "Video conference", fileType: "folder" },
         ],
       },
-      {
-        key: "bbbbb",
-        label: "Item 2",
-        children: [
-          { label: "Option 3", key: "setting:3" },
-          { label: "Option 4", key: "setting:4" },
-        ],
-      },
+      { id: "1.2", label: "Personal", fileType: "folder" },
+      { id: "1.3", label: "Group photo", fileType: "folder" },
     ],
   },
   {
-    key: "bb213bbb",
-    label: "setting:3",
+    id: "2",
+    label: "Bookmarked",
+    fileType: "folder",
+    children: [
+      { id: "2.1", label: "Learning materials", fileType: "folder" },
+      { id: "2.2", label: "News", fileType: "folder" },
+      { id: "2.3", label: "Forums", fileType: "folder" },
+      { id: "2.4", label: "Travel documents", fileType: "folder" },
+    ],
   },
-];
-
-const data = [
-  { id: 1, name: "Cupcake", calories: 305 },
-  { id: 2, name: "Donut", calories: 452 },
-  { id: 3, name: "Eclair", calories: 262 },
+  { id: "3", label: "History", fileType: "folder" },
+  { id: "4", label: "Trash", fileType: "folder" },
 ];
 
 export function App() {
-  return (
-    <Stack direction="row">
-      <Box
-        sx={(theme) => ({
-          width: theme.spacing(30),
-          position: "sticky",
-          top: 0,
-          left: 0,
-          bottom: 0,
-          zIndex: 1,
-          boxShadow: 1,
-          bgcolor: "background.paper",
-        })}
-      >
-        <Menu items={items} />
-      </Box>
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          height: "100vh",
-          padding: 2,
-        }}
-      >
-        <Box height="2000px">
-          <Box component={"header"} boxShadow={1}>
-            <Menu mode="horizontal" items={items} />
-          </Box>
-          <Box component={"main"} mt={2}>
-            <CommonTable
-              rows={data}
-              rowKey="id"
-              checkboxSelection
-              columns={[
-                { key: "name", label: "名称" },
-                { key: "calories", label: "卡路里", numeric: true },
-                {
-                  numeric: true,
-                  label() {
-                    return <Box pr={3}>操作</Box>;
-                  },
-                  render(row) {
-                    return (
-                      <Button onClick={() => alert(row.name)}>编辑</Button>
-                    );
-                  },
-                },
-              ]}
-            />
-          </Box>
-        </Box>
-      </Box>
-    </Stack>
-  );
+  return <FileExplorer items={items} />;
 }
