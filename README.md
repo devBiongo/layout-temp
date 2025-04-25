@@ -1,54 +1,109 @@
-# React + TypeScript + Vite
+# 💻 インストール手順 (Windows)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+このドキュメントでは、Windows 環境に **Node.js 20.19.1 (LTS)** と **Node.js 10** をインストールする方法を説明します。
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✅ 1. Node.js のインストール
 
-## Expanding the ESLint configuration
+### 1.1 Node.js 20.19.1 (LTS) のインストール
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. 以下のリンクから **Node.js 20.19.1 (LTS)** の **zip アーカイブ** をダウンロードします。
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+   👉 [Node.js 20.19.1 (LTS) zip ダウンロードページ](https://nodejs.org/dist/v20.19.1/node-v20.19.1-x64.zip)
+
+2. ダウンロードした **zip ファイル** を **`C:\develop\frontend\node_home\node-v20`** に解凍します。
+
+### 1.2 Node.js 10 のインストール
+
+1. 以下のリンクから **Node.js 10.x.x (LTS)** の **zip アーカイブ** をダウンロードします。
+
+   👉 [Node.js 10.x.x (LTS) zip ダウンロードページ](https://nodejs.org/dist/v10.24.1/node-v10.24.1-x64.zip)
+
+2. ダウンロードした **zip ファイル** を **`C:\develop\frontend\node_home\node-v10`** に解凍します。
+
+### 1.3🔎 環境変数の設定
+
+Node.js をどこからでも実行できるように、環境変数を設定します。
+
+1. **「スタートメニュー」→「システム環境設定」** を開き、「環境変数」を選択します。
+2. **ユーザー環境変数** セクションで、次の変数を追加します：
+   - **変数名**: `NODE_HOME`
+   - **変数値**: `C:\develop\frontend\node_home\node-v20`
+3. さらに **Path** を選び、「編集」をクリックします。
+4. 新しいパスを追加します：`%NODE_HOME%`
+5. 変更を保存してウィンドウを閉じます。
+
+### 1.4 `node_switch.bat` を作成して Node.js バージョンを切り替える
+
+1. **`C:\develop\frontend\node_home`** フォルダ内に **`node_switch.bat`** という名前の新しいファイルを作成します。
+2. このファイルに以下の内容を追加します：
+
+```batch
+@echo off
+chcp 65001 >nul
+setlocal enabledelayedexpansion
+
+:: Set the current directory as the Node version directory
+set "NODE_VERSIONS_DIR=%~dp0"
+set "NODE_VERSIONS_DIR=%NODE_VERSIONS_DIR:~0,-1%"
+
+echo.
+echo Available Node.js versions (%NODE_VERSIONS_DIR%):
+echo ========================================================
+
+set /a index=0
+
+for /d %%D in ("%NODE_VERSIONS_DIR%\*") do (
+    set /a index+=1
+    set "ver[!index!]=%%~nxD"
+    echo !index!. %%~nxD
+)
+
+echo ========================================================
+
+:selectVersion
+
+set /p sel=Please enter the version number to use :
+
+set "selected=!ver[%sel%]!"
+
+if "%selected%"=="" (
+    echo Invalid selection, please try again.
+    goto selectVersion
+)
+
+set "NEW_NODE_HOME=%NODE_VERSIONS_DIR%\%selected%"
+
+reg query "HKCU\Environment" /v NODE_HOME >nul 2>&1
+if %errorlevel%==0 (
+    echo Overwriting existing NODE_HOME...
+) else (
+    echo Creating new NODE_HOME...
+)
+
+setx NODE_HOME "%NEW_NODE_HOME%" >nul
+
+echo ✔ Switched to Node.js version "%selected%".
+echo ✔ NODE_HOME = %NEW_NODE_HOME%
+echo ✔ Please restart the terminal for the changes to take effect.
+
+pause
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ✅ 2. pnpm のインストールと配置
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm install -g pnpm
+pnpm -v
+pnpm config set registry https://registry.npmmirror.com
+```
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+## ✅ 3.
+
+```bash
+cd C:\develop\workspace
+git clone https://gitlab.com/your-group/your-project.git
+pnpm install
+pnpm dev
 ```
