@@ -1,23 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { RouteObject } from "react-router-dom";
 import { normalizeAppPath } from "./utils/app-paths";
-
-// Dynamically import all .tsx files under /app
-const allModules = import.meta.glob<
-  true,
-  string,
-  () => Promise<{ default: React.ComponentType; meta?: { title: string } }>
->("./app/**/*.tsx");
-
-// Filter for all page.tsx files
-const pageModules = Object.entries(allModules).filter(([path]) =>
-  /\/page\.tsx$/.test(path)
-);
-
-// Filter for all layout.tsx files
-const layoutModules = Object.entries(allModules).filter(([path]) =>
-  /\/layout\.tsx$/.test(path)
-);
+import { layoutModules, pageModules } from "./utils/build";
 
 // Build a map of routePrefix -> lazy layout component
 const layoutMap = layoutModules.map(([path, loader]) => {

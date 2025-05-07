@@ -79,3 +79,13 @@ export function normalizeAppPath(route: string) {
   )
 }
 
+// function addMethod(object,name,fn){
+//   const old = object[name]
+//   object[name] = function (...args){
+//     if(args.length===fn.length){
+//       return fn.applu(this.args)
+//     }else if(typeof old==="function"){
+//       return old.apply(this,args)
+//     }
+//   }
+// }

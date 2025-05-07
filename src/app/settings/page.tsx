@@ -2,6 +2,4 @@ export default function Page() {
   return <div>setting</div>;
 }
 
-export const meta = {
-  title: "设置管理",
-};
+export const META = { title: "设置管理default" };

@@ -1,3 +1,7 @@
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: "pink", minHeight: 500 }}>{children}</div>;
+  return <>{children}</>;
 }
+
+export const META = {
+  title: "权限管理",
+};

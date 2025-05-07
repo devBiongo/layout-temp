@@ -2,6 +2,6 @@ export default function Page() {
   return <div>permission</div>;
 }
 
-export const meta = {
-  title: "权限管理",
+export const META = {
+  title: "权限一览",
 };

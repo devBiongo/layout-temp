@@ -2,6 +2,4 @@ export default function Page() {
   return <div>c</div>;
 }
 
-export const meta = {
-  title: "c",
-};
+export const META = { title: "设置管理ccccc" };
