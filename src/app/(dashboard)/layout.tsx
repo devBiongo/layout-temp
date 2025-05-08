@@ -1,5 +1,7 @@
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <div style={{ border: "1px solid red", padding: 20 }}>{children}</div>;
+  return (
+    <div style={{ border: "2px solid blue", padding: 20 }}>{children}</div>
+  );
 }
 
 // type MenuItem = {

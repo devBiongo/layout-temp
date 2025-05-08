@@ -3,10 +3,10 @@ import { RouteObject } from "react-router-dom";
 import { tree } from "./utils/build";
 import React from "react";
 import { isDynamicRoute, isGroupSegment } from "./utils/app-paths";
-
-type TreeNode = {
+console.table(tree);
+type FileNode = {
   path: string;
-  children?: TreeNode[];
+  children?: FileNode[];
   loader?: () => Promise<{
     default: React.ComponentType;
     META?: { title: string };
@@ -31,71 +31,98 @@ function splitArray<T>(arr: T[], predicate: (item: T) => boolean): [T[], T[]] {
   );
 }
 
-function transformToRoutes(
-  treeNodes: TreeNode[],
-  prevLayoutLoaders: Loader[] = []
+function buildRoutes(
+  fileNodes: FileNode[],
+  parentLayouts: Loader[] = []
 ): RouteObject[] {
-  const allLayoutLoaders = [...prevLayoutLoaders];
-  const [currLayoutNodes, restTreeNodes] = splitArray(
-    treeNodes,
-    (treeNode) => treeNode.path === "layout"
+  // Inherit and copy layout loaders from the parent route level
+  const layouts = [...parentLayouts];
+
+  // Separate the layout node from the rest
+  const [layoutNodes, contentNodes] = splitArray(
+    fileNodes,
+    (fileNode) => fileNode.path === "layout"
   );
-  if (currLayoutNodes.length > 0) {
-    const [{ loader }] = currLayoutNodes;
-    if (loader) {
-      allLayoutLoaders.push(loader);
-    }
+  if (layoutNodes.length > 0) {
+    const [{ loader }] = layoutNodes;
+    if (loader) layouts.push(loader);
   }
-  const [groupNodetrees, noGroupNodetrees] = splitArray(
-    restTreeNodes,
-    (treeNode) => isGroupSegment(treeNode.path)
+
+  // Group nodes that are group segments (e.g., (group)) and regular route nodes
+  const [groupNodes, routeNodes] = splitArray(contentNodes, (node) =>
+    isGroupSegment(node.path)
   );
 
-  let returnArr = noGroupNodetrees.map((node) => {
+  // Build route objects from regular nodes
+  const routes: RouteObject[] = routeNodes.map((node) => {
     if (node.loader) {
-      const Page = lazy(node.loader);
-      // Wrap the Page with matched layouts from innermost to outermost
-      let element = React.createElement(Page);
-      for (const layoutLoader of allLayoutLoaders) {
-        element = React.createElement(lazy(layoutLoader), null, element);
+      // Lazy load the page component
+      const PageComponent = lazy(node.loader);
+
+      // Wrap with all layout components from innermost to outermost
+      let element = React.createElement(PageComponent);
+      for (let i = layouts.length - 1; i >= 0; i--) {
+        const LayoutComponent = lazy(layouts[i]);
+        element = React.createElement(LayoutComponent, null, element);
       }
-      // Return the route object with Suspense fallback
-      return {
-        index: true,
-        element: React.createElement(
-          Suspense,
-          { fallback: <div style={{ background: "pink" }}>Loading...</div> },
-          element
-        ),
-      };
+
+      // Wrap in a suspense fallback for lazy loading
+      const wrappedElement = React.createElement(
+        Suspense,
+        { fallback: <div style={{ background: "pink" }}>Loading...</div> },
+        element
+      );
+
+      // If the path is "page", mark it as an index route
+      return node.path === "page"
+        ? { index: true, element: wrappedElement }
+        : { path: resolvePath(node.path), element: wrappedElement };
     }
 
-    if (isDynamicRoute(node.path)) {
-      return {
-        path: node.path.replace(/\[(\w+)\]/g, ":$1"),
-        children: transformToRoutes(node.children!, allLayoutLoaders),
-      };
+    // If the node has no loader, it must be a parent route and have children
+    if (!node.children) {
+      throw new Error("Missing children for non-loader node.");
     }
-    return {
-      path: node.path,
-      children: transformToRoutes(node.children!, allLayoutLoaders),
-    };
+
+    const children = buildRoutes(node.children, layouts);
+    const path = resolvePath(node.path);
+    const [only] = children;
+
+    if (children.length === 1 && only.index) {
+      return { path, element: only.element };
+    }
+
+    return { path, children };
   });
 
-  if (groupNodetrees.length > 0) {
-    groupNodetrees.forEach((groupNode) => {
-      if (groupNode.children) {
-        returnArr = [
-          ...returnArr,
-          ...transformToRoutes(groupNode.children, allLayoutLoaders),
-        ];
-      }
-    });
-  }
-  return returnArr;
+  // Flatten and transform all group segment children recursively
+  const groupRoutes = groupNodes.flatMap((node) =>
+    node.children ? buildRoutes(node.children, layouts) : []
+  );
+
+  // Check if the main route list already includes an index route
+  const hasIndex = routes.some((route) => route.index);
+
+  // If an index route already exists, remove any index routes from groupRoutes
+  const filteredGroupRoutes = hasIndex
+    ? groupRoutes.filter((route) => !route.index)
+    : groupRoutes;
+
+  // Return the combined list of routes, ensuring only one index route exists
+  return [...routes, ...filteredGroupRoutes];
 }
 
-export const routes = transformToRoutes(tree!);
+function resolvePath(path: string) {
+  if (!isDynamicRoute(path)) {
+    return path;
+  }
+  // const regex = /\[\.\.\.(.*?)\]/;
+
+  // Handle dynamic route segments like [id] → :id
+  return path.replace(/\[(\w+)\]/g, ":$1");
+}
+
+export const routes = buildRoutes(tree!);
 console.log(routes);
 
 // const path = normalizeAppPath(filePath.replace(/^\.\/app/, ""));
