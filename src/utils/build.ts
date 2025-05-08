@@ -6,16 +6,49 @@ const allModules = import.meta.glob<
   () => Promise<{ default: React.ComponentType; meta?: { title: string } }>
 >("../app/**/*.tsx");
 
-// Filter for all page.tsx files
-export const pageModules = Object.entries(allModules).filter(([path]) =>
-  /\/page\.tsx$/.test(path)
-).map(([path, loader]) => ({ path: path.replace(/^(\.\.\/)?app/, ''), loader }))
+type TreeNode = {
+  path: string;
+  children?: TreeNode[];
+  loader?: () => Promise<{ default: React.ComponentType; meta?: { title: string } }>;
+};
+
+
+function buildModuleTree(
+  modules: Record<string, () => Promise<{ default: React.ComponentType; meta?: { title: string } }>>,
+  prefix = "../app/"
+): TreeNode {
+  const root: TreeNode = { path: "app", children: [] };
+
+  Object.entries(modules).forEach(([fullPath, loader]) => {
+    const relativePath = fullPath.slice(prefix.length);
+    const parts = relativePath.split("/");
+
+    let current = root;
+
+    for (let i = 0; i < parts.length; i++) {
+      const isFile = i === parts.length - 1;
+      const rawName = parts[i];
+      const path = isFile ? rawName.replace(/\.tsx$/, "") : rawName;
+
+      if (!current.children) current.children = [];
+
+      let next = current.children.find((n) => n.path === path);
+      if (!next) {
+        next = isFile
+          ? { path, loader: loader }
+          : { path, children: [] };
+        current.children.push(next);
+      }
+
+      current = next;
+    }
+  });
+
+  return root;
+}
 
 
 
-// Filter for all layout.tsx files
-export const layoutModules = Object.entries(allModules).filter(([path]) =>
-  /\/layout\.tsx$/.test(path)
-).map(([path, loader]) => ({ path: path.replace(/^(\.\.\/)?app/, ''), loader }))
+export const tree = buildModuleTree(allModules).children;
 
-console.log(pageModules, layoutModules);
+

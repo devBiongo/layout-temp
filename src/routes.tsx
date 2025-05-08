@@ -1,43 +1,101 @@
-import React, { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { RouteObject } from "react-router-dom";
-import { normalizeAppPath } from "./utils/app-paths";
-import { layoutModules, pageModules } from "./utils/build";
+import { tree } from "./utils/build";
+import React from "react";
+import { isDynamicRoute, isGroupSegment } from "./utils/app-paths";
 
-// Build a map of routePrefix -> lazy layout component
-const layoutMap = layoutModules.map(([path, loader]) => {
-  const routePrefix =
-    path.replace(/^\.\/app/, "").replace(/\/layout\.tsx$/, "") || "/";
-  return {
-    routePrefix,
-    loader: lazy(loader),
+type TreeNode = {
+  path: string;
+  children?: TreeNode[];
+  loader?: () => Promise<{
+    default: React.ComponentType;
+    META?: { title: string };
+  }>;
+};
+
+type Loader = () => Promise<{
+  default: React.ComponentType;
+  META?: {
+    title: string;
   };
-});
+}>;
 
-// Construct the route configuration for each page
-export const routes: RouteObject[] = pageModules.map(([filePath, loader]) => {
-  // Normalize the path string to use as the route path
-  const path = normalizeAppPath(filePath.replace(/^\.\/app/, ""));
+function splitArray<T>(arr: T[], predicate: (item: T) => boolean): [T[], T[]] {
+  return arr.reduce<[T[], T[]]>(
+    ([pass, fail], item) => {
+      return predicate(item)
+        ? [[...pass, item], fail]
+        : [pass, [...fail, item]];
+    },
+    [[], []]
+  );
+}
 
-  const Page = lazy(loader);
-
-  // Match all layouts that are parent paths of this page, sorted by depth
-  const matchedLayouts = layoutMap
-    .filter(({ routePrefix }) => filePath.startsWith(`./app${routePrefix}`))
-    .sort((a, b) => b.routePrefix.length - a.routePrefix.length);
-
-  // Wrap the Page with matched layouts from innermost to outermost
-  let element = React.createElement(Page);
-  for (const layout of matchedLayouts) {
-    element = React.createElement(layout.loader, null, element);
+function transformToRoutes(
+  treeNodes: TreeNode[],
+  prevLayoutLoaders: Loader[] = []
+): RouteObject[] {
+  const allLayoutLoaders = [...prevLayoutLoaders];
+  const [currLayoutNodes, restTreeNodes] = splitArray(
+    treeNodes,
+    (treeNode) => treeNode.path === "layout"
+  );
+  if (currLayoutNodes.length > 0) {
+    const [{ loader }] = currLayoutNodes;
+    if (loader) {
+      allLayoutLoaders.push(loader);
+    }
   }
+  const [groupNodetrees, noGroupNodetrees] = splitArray(
+    restTreeNodes,
+    (treeNode) => isGroupSegment(treeNode.path)
+  );
 
-  // Return the route object with Suspense fallback
-  return {
-    path,
-    element: React.createElement(
-      Suspense,
-      { fallback: <div>Loading...</div> },
-      element
-    ),
-  };
-});
+  let returnArr = noGroupNodetrees.map((node) => {
+    if (node.loader) {
+      const Page = lazy(node.loader);
+      // Wrap the Page with matched layouts from innermost to outermost
+      let element = React.createElement(Page);
+      for (const layoutLoader of allLayoutLoaders) {
+        element = React.createElement(lazy(layoutLoader), null, element);
+      }
+      // Return the route object with Suspense fallback
+      return {
+        index: true,
+        element: React.createElement(
+          Suspense,
+          { fallback: <div style={{ background: "pink" }}>Loading...</div> },
+          element
+        ),
+      };
+    }
+
+    if (isDynamicRoute(node.path)) {
+      return {
+        path: node.path.replace(/\[(\w+)\]/g, ":$1"),
+        children: transformToRoutes(node.children!, allLayoutLoaders),
+      };
+    }
+    return {
+      path: node.path,
+      children: transformToRoutes(node.children!, allLayoutLoaders),
+    };
+  });
+
+  if (groupNodetrees.length > 0) {
+    groupNodetrees.forEach((groupNode) => {
+      if (groupNode.children) {
+        returnArr = [
+          ...returnArr,
+          ...transformToRoutes(groupNode.children, allLayoutLoaders),
+        ];
+      }
+    });
+  }
+  return returnArr;
+}
+
+export const routes = transformToRoutes(tree!);
+console.log(routes);
+
+// const path = normalizeAppPath(filePath.replace(/^\.\/app/, ""));

@@ -6,6 +6,7 @@
  * @returns Whether the route is dynamic.
  */
 export function isDynamicRoute(route: string, strict: boolean = true): boolean {
+  route = ensureLeadingSlash(route)
 
   // Identify /.*[param].*/ in route string
   const TEST_ROUTE = /\/[^/]*\[[^/]+\][^/]*(?=\/|$)/
@@ -28,7 +29,7 @@ function ensureLeadingSlash(path: string) {
   return path.startsWith('/') ? path : `/${path}`
 }
 
-function isGroupSegment(segment: string) {
+export function isGroupSegment(segment: string) {
   // Use array[0] for performant purpose
   return segment[0] === '(' && segment.endsWith(')')
 }
