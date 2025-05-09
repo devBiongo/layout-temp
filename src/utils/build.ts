@@ -17,7 +17,7 @@ function buildModuleTree(
   modules: Record<string, () => Promise<{ default: React.ComponentType; meta?: { title: string } }>>,
   prefix = "../app/"
 ): TreeNode {
-  const root: TreeNode = { path: "app", children: [] };
+  const root: TreeNode = { path: "", children: [] };
 
   Object.entries(modules).forEach(([fullPath, loader]) => {
     const relativePath = fullPath.slice(prefix.length);
@@ -49,6 +49,21 @@ function buildModuleTree(
 
 
 
-export const tree = buildModuleTree(allModules).children;
+export const tree = buildModuleTree(allModules);
+
+
+export type Loader = () => Promise<{
+  default: React.ComponentType;
+  META?: {
+    title: string;
+  };
+}>;
+
+
+export type FileNode = {
+  path: string;
+  children?: FileNode[];
+  loader?: Loader;
+};
 
 
